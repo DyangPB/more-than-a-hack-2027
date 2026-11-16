@@ -42,7 +42,7 @@ per half.
 
 ## 3. Assets
 - **Used:** tactical tracking (ATD): positions of the track slots and of the ball, and the team of
-  each slot. Smart Tagging: the `SET PIECES` windows and the two kick-off frames.
+  each slot. Smart Tagging: the SET PIECES windows. The two kick-off frames come from a constant in the provided starter code (starter/load_smart_tagging.py).
 - **Examined and dropped:**
   - Smart Tagging `Team` tags and phase codes. `DATA.md` says some are `N/A` (every throw-in), and
     we could not confirm what the tag means in the defending phases without relying on the ground
