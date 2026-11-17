@@ -19,7 +19,7 @@ Three layers, then an assembly step.
 1. **Control.** On a frame with a tracked ball, the nearest tracked player controls it if he is
    within 2.5 m. Otherwise nobody does (loose, in the air, or untracked ball).
 2. **Confirmation and hold.** A change of possession is accepted only after the new team has
-   controlled the ball for 25 frames (1 s), with gaps between observations of up to 1 s. The
+   controlled the ball for 18 frames (0.72 s at 25 FPS), with gaps between observations of up to 18 frames. The
    change is dated back to the first of those observations, so confirming adds no delay. While
    nobody controls the ball the last team keeps it, as the challenge rules state for loose balls.
    This removes the frame-level flicker of "nearest player wins": the same idea as the provided
@@ -70,7 +70,7 @@ against any score.
 | Parameter | Value | Reason |
 |---|---|---|
 | Control distance | 2.5 m | A player can only play the ball from within a couple of metres; tracking error is about 1 m |
-| Confirmation time | 25 frames (1 s) | About one real control or pass; shorter touches are not a change of possession |
+| Confirmation time | 18 frames (0.72 s) | A sustained control interval of approximately 0.72 seconds, long enough to suppress tracking flicker while detecting genuine possession changes more quickly |
 | Gap tolerance while confirming | 1 s | Brief tracking drop-outs should not reset the count |
 | Resume speed / hold | 1.5 m/s / 3 s | Slightly above relaxed walking (about 1.3-1.4 m/s), sustained rather than a spike |
 | Maximum dead stretch per set piece | 20 s | A restart rarely takes longer; also bounds the damage if speed never rises |
