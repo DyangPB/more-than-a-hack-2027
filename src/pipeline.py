@@ -14,7 +14,7 @@ from src.deadball import (median_player_speed, dead_from_set_pieces,  # noqa: E4
 import load_smart_tagging as st  # noqa: E402
 
 
-def team_series(control, live):
+def team_series(control, live, min_control_frames=25):
     """Team in possession (HOME/AWAY/NONE) per frame.
 
     Computed separately inside every stretch of live play, so possession never carries over a
@@ -24,7 +24,7 @@ def team_series(control, live):
     out = np.full(len(control), NONE, dtype=np.int8)
     edge = np.diff(np.concatenate([[0], live.astype(np.int8), [0]]))
     for s, e in zip(np.flatnonzero(edge == 1), np.flatnonzero(edge == -1)):
-        seg = confirm_control(control[s:e])
+        seg = confirm_control(control[s:e], min_frames=min_control_frames)
         seen = np.flatnonzero(seg != NONE)
         if len(seen):
             seg[:seen[0]] = seg[seen[0]]          # look-ahead: restart belongs to who takes the ball
@@ -37,15 +37,23 @@ def team_series(control, live):
     return out
 
 
-def build_labels():
+def build_labels(version="v2"):
+    """Build the reference v2 or the marked v3 rule-based experiment."""
     t = load_tracking()
     graded = graded_mask()
-    control, _ = control_from_ball(t["ball"], t["players"], t["team"])
+    # === V3 IMPLEMENTATION: responsive possession confirmation ===
+    if version == "v3":
+        # Slightly shorter confirmation improves responsiveness while retaining hysteresis.
+        control, _ = control_from_ball(t["ball"], t["players"], t["team"], max_dist=2.5)
+        min_control = 18
+    else:
+        control, _ = control_from_ball(t["ball"], t["players"], t["team"])
+        min_control = 25
     speed = median_player_speed(t["players"])
     dead_sp, _ = dead_from_set_pieces(st.load(), speed)
     dead = (dead_sp | dead_from_still_players(speed) | dead_before_kickoff()) & graded
     live = graded & ~dead
-    team = team_series(control, live)
+    team = team_series(control, live, min_control_frames=min_control)
     labels = np.full(N_FRAMES, "X", dtype="<U1")
     labels[live & (team == HOME)] = "H"
     labels[live & (team == AWAY)] = "A"
@@ -54,7 +62,7 @@ def build_labels():
 
 
 def main(name="v1"):
-    labels = build_labels()
+    labels = build_labels(name)
     path = os.path.join(ROOT, "evaluation", "results", name + ".csv")
     pd.DataFrame({"frame": np.arange(N_FRAMES), "label": labels}).to_csv(path, index=False)
     print("wrote", path, "({} rows)".format(len(labels)))
