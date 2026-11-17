@@ -30,6 +30,25 @@ def control_from_ball(ball, players, team, max_dist=MAX_CONTROL_DIST_M):
     return out, dmin
 
 
+SOFT_MAX_DIST_M = 4.0
+
+
+def soft_control(ball, players, team, min_dist=MAX_CONTROL_DIST_M, max_dist=SOFT_MAX_DIST_M):
+    """Weak control: HOME / AWAY if the nearest player is between min_dist and max_dist of the ball.
+
+    Shows which team is closest to a loose ball. Everything else is NONE.
+    """
+    d = np.hypot(players[:, :, 0] - ball[:, None, 0], players[:, :, 1] - ball[:, None, 1])
+    d[:, ~np.isin(team, (HOME, AWAY))] = np.inf
+    d = np.where(np.isnan(d), np.inf, d)
+    nearest = d.argmin(axis=1)
+    dmin = d[np.arange(len(d)), nearest]
+    out = np.full(len(d), NONE, dtype=np.int8)
+    ok = (dmin > min_dist) & (dmin <= max_dist)
+    out[ok] = team[nearest[ok]]
+    return out
+
+
 def hold_last(control):
     """Carry the last known team forward over NONE frames.
 
